@@ -1,0 +1,9 @@
+{
+  "name": "dpi-financial-reconstruction",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node validate.mjs",
+    "serve": "node serve.mjs"
+  }
+}
