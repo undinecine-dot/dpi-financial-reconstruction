@@ -23,9 +23,9 @@ const formatValue = (value, key = '') => {
     const monetary = /(cash|revenue|profit|expense|cost|payable|receivable|inventory|ppe|loan|principal|interest|depreciation|debt|equity|assets|liabilities|amount|cogs|flow|advance|deposit|distribution|writeoff|provision|rent|marketing|software|utilities|repair|payroll)/i.test(key);
     return monetary ? money.format(value) : number.format(value);
   }
-  if (Array.isArray(value)) return value.map((item) => formatValue(item, key)).join(' – ');
+  if (Array.isArray(value)) return value.map((item) => formatValue(item, key)).join(' â ');
   if (typeof value === 'object') {
-    return Object.entries(value).map(([childKey, childValue]) => `${titleCase(childKey)}: ${formatValue(childValue, childKey)}`).join(' · ');
+    return Object.entries(value).map(([childKey, childValue]) => `${titleCase(childKey)}: ${formatValue(childValue, childKey)}`).join(' Â· ');
   }
   return String(value);
 };
@@ -42,7 +42,23 @@ const financialRows = (obj) => {
 };
 
 const answerSummary = (answer) => escapeHtml(formatValue(answer));
-const effectSummary = (effect = {}) => Object.entries(effect).map(([key, value]) => `${titleCase(key)} ${formatValue(value, key)}`).join(' · ');
+const effectSummary = (effect = {}) => Object.entries(effect).map(([key, value]) => `${titleCase(key)} ${formatValue(value, key)}`).join(' Â· ');
+
+const judgmentExplanation = (decision) => {
+  const alternative = decision.alternativeTreatment;
+  return `<div class="judgment-explanation">
+    <h5>Student judgment</h5>
+    <p>${escapeHtml(decision.studentReasoning ?? 'No student reasoning recorded.')}</p>
+    <div class="judgment-evidence"><strong>Evidence considered</strong>${evidenceList(decision.evidence)}</div>
+    ${alternative ? `<aside class="alternative-callout">
+      <strong>Alternative without the disposal provision</strong>
+      <p><b>Selected-case assumption:</b> ${escapeHtml(alternative.assumption)}</p>
+      <p><b>Alternative treatment:</b> ${escapeHtml(alternative.treatment)}</p>
+      <div class="effect-line">Effect versus selected case Â· ${escapeHtml(effectSummary(alternative.effectComparedWithSelected))}</div>
+      <div class="effect-line">Alternative statements Â· ${escapeHtml(formatValue(alternative.alternativeStatements))}</div>
+    </aside>` : ''}
+  </div>`;
+};
 
 async function loadSubmission() {
   const response = await fetch('/submission.json', { cache: 'no-store' });
@@ -101,7 +117,7 @@ function renderMain(data) {
   content.innerHTML = `
     <section class="hero-grid" aria-labelledby="case-title">
       <div class="hero">
-        <p class="eyebrow">DPI-HT-01 · takeover reconstruction</p>
+        <p class="eyebrow">DPI-HT-01 Â· takeover reconstruction</p>
         <h1 id="case-title">Evidence before valuation.</h1>
         <p>The management deck claimed exceptional profit. This review rebuilds the accounts from bank records, accepted contracts, supplier evidence, physical stock, payroll, debt, and subsequent confirmations.</p>
         <div class="hero-meta"><span>Reporting date 31 Aug 2026</span><span>Currency EUR</span><span>100 evidence-linked decisions</span></div>
@@ -151,17 +167,17 @@ function renderMain(data) {
         <div class="trail-body">
           <div class="trail-column"><h4>Agent 1 proposal</h4><p>${answerSummary(decision.aiProposal)}</p></div>
           <div class="trail-column"><h4>Independent challenge</h4><p>${escapeHtml(decision.independentChallenge ?? 'No challenge recorded.')}</p></div>
-          <div class="trail-column"><h4>Certified student answer</h4><p>${answerSummary(decision.answer)}</p><div class="effect-line">${escapeHtml(effectSummary(decision.statementEffect))}</div></div>
+          <div class="trail-column"><h4>Certified student answer</h4><p>${answerSummary(decision.answer)}</p><div class="effect-line">${escapeHtml(effectSummary(decision.statementEffect))}</div>${judgmentExplanation(decision)}</div>
         </div>
       </article>`).join('')}</div>
     </section>
     <section class="panel" id="evidence">
       <div class="panel-heading"><div><h2>Evidence register</h2><p>Original case files used in the reconstruction.</p></div><span class="count-chip">${data.evidence?.length ?? 0} sources</span></div>
-      <div class="evidence-grid">${(data.evidence ?? []).map((item, index) => `<article class="evidence-item"><strong>${String(index + 1).padStart(2, '0')} · ${escapeHtml(typeof item === 'string' ? item : item.name ?? item.id ?? 'Evidence')}</strong><span>${escapeHtml(typeof item === 'string' ? 'Original case evidence' : item.role ?? item.description ?? '')}</span></article>`).join('')}</div>
+      <div class="evidence-grid">${(data.evidence ?? []).map((item, index) => `<article class="evidence-item"><strong>${String(index + 1).padStart(2, '0')} Â· ${escapeHtml(typeof item === 'string' ? item : item.name ?? item.id ?? 'Evidence')}</strong><span>${escapeHtml(typeof item === 'string' ? 'Original case evidence' : item.role ?? item.description ?? '')}</span></article>`).join('')}</div>
     </section>
     <section class="panel" id="reconciliations">
       <div class="panel-heading"><div><h2>Reconciliations</h2><p>Required statement and schedule controls.</p></div></div>
-      <ul class="reconciliation-list">${(data.reconciliations ?? []).map((item) => `<li><span class="status-icon">✓</span><span>${escapeHtml(item.name)}</span>${badge(item.difference === 0 ? 'Reconciled' : formatValue(item.difference), item.difference === 0 ? 'pass' : 'fail')}</li>`).join('')}</ul>
+      <ul class="reconciliation-list">${(data.reconciliations ?? []).map((item) => `<li><span class="status-icon">â</span><span>${escapeHtml(item.name)}</span>${badge(item.difference === 0 ? 'Reconciled' : formatValue(item.difference), item.difference === 0 ? 'pass' : 'fail')}</li>`).join('')}</ul>
     </section>
     <section class="panel" id="uncertainty">
       <div class="panel-heading"><div><h2>Uncertainty</h2><p>Limits remain visible rather than being filled with unsupported assumptions.</p></div></div>
@@ -171,7 +187,7 @@ function renderMain(data) {
       <div class="panel-heading"><div><h2>Immediate board controls</h2><p>Actions required before valuation and normal operation.</p></div></div>
       <ol class="control-list">${(board.controls ?? []).map((control) => `<li>${escapeHtml(control)}</li>`).join('')}</ol>
     </section>
-    <p class="footer-note">DPI-HT-01 · Static submission data · No login or external API required</p>
+    <p class="footer-note">DPI-HT-01 Â· Static submission data Â· No login or external API required</p>
   `;
   installDecisionFilters(data.decisions);
 }
@@ -191,8 +207,8 @@ function renderReview(data) {
 
   content.innerHTML = `
     <section class="hero-grid" aria-labelledby="review-title">
-      <div class="hero"><p class="eyebrow">Assessor view · DPI-HT-01</p><h1 id="review-title">Exceptions first.</h1><p>Compact review of material judgments, agent disagreements, student overrides, low-confidence answers, and unresolved evidence.</p><div class="hero-meta"><span>100 decisions</span><span>25 material judgments</span><span>${flags.length} review flags</span></div></div>
-      <aside class="board-card"><div><p class="eyebrow">Submission status</p><h2>${escapeHtml(data.certificationStatus ?? 'Awaiting student certification')}</h2><p>Every final answer must be checked against the evidence before submission.</p></div><div class="verdict">Profit ${money.format(data.statements?.profitAndLoss?.netProfit ?? 0)} · Cash ${money.format(data.statements?.cashFlow?.closingCash ?? 0)}</div></aside>
+      <div class="hero"><p class="eyebrow">Assessor view Â· DPI-HT-01</p><h1 id="review-title">Exceptions first.</h1><p>Compact review of material judgments, agent disagreements, student overrides, low-confidence answers, and unresolved evidence.</p><div class="hero-meta"><span>100 decisions</span><span>25 material judgments</span><span>${flags.length} review flags</span></div></div>
+      <aside class="board-card"><div><p class="eyebrow">Submission status</p><h2>${escapeHtml(data.certificationStatus ?? 'Awaiting student certification')}</h2><p>Every final answer must be checked against the evidence before submission.</p></div><div class="verdict">Profit ${money.format(data.statements?.profitAndLoss?.netProfit ?? 0)} Â· Cash ${money.format(data.statements?.cashFlow?.closingCash ?? 0)}</div></aside>
     </section>
     <section class="review-summary" aria-label="Review counts">
       <article class="review-card"><strong>100</strong><span>Total decisions</span></article>
@@ -202,19 +218,19 @@ function renderReview(data) {
       <article class="review-card"><strong>${lowConfidence.length}</strong><span>Low confidence</span></article>
     </section>
     <section class="panel">
-      <div class="panel-heading"><div><h2>Review flags</h2><p>Items requiring the assessor’s attention.</p></div><span class="count-chip">${flags.length} flags</span></div>
+      <div class="panel-heading"><div><h2>Review flags</h2><p>Items requiring the assessorâs attention.</p></div><span class="count-chip">${flags.length} flags</span></div>
       <div class="flag-list">${flags.length ? flags.map((item) => `<article class="flag-item ${item.danger ? 'danger' : ''}"><h3><span class="decision-id">${escapeHtml(item.id)}</span> ${escapeHtml(item.flag)}</h3><p><strong>${escapeHtml(item.question)}</strong><br>${escapeHtml(item.detail ?? '')}</p></article>`).join('') : '<div class="empty-state">No exception flags.</div>'}</div>
     </section>
     <section class="panel">
       <div class="panel-heading"><div><h2>Material judgment trail</h2><p>Both AI positions and the proposed final answer.</p></div></div>
-      <div class="trail-list">${material.map((decision) => `<article class="trail-item"><div class="trail-head"><h3><span class="decision-id">${escapeHtml(decision.id)}</span> ${escapeHtml(decision.question)}</h3><div>${badge(titleCase(decision.confidence), decision.confidence)} ${decision.agentDisagreement ? badge('Disagreement', 'disagreement') : ''}</div></div><div class="trail-body"><div class="trail-column"><h4>Agent 1</h4><p>${answerSummary(decision.aiProposal)}</p></div><div class="trail-column"><h4>Agent 2</h4><p>${escapeHtml(decision.independentChallenge ?? '')}</p></div><div class="trail-column"><h4>Final answer</h4><p>${answerSummary(decision.answer)}</p><div class="effect-line">${escapeHtml(decision.studentReasoning ?? '')}</div></div></div></article>`).join('')}</div>
+      <div class="trail-list">${material.map((decision) => `<article class="trail-item"><div class="trail-head"><h3><span class="decision-id">${escapeHtml(decision.id)}</span> ${escapeHtml(decision.question)}</h3><div>${badge(titleCase(decision.confidence), decision.confidence)} ${decision.agentDisagreement ? badge('Disagreement', 'disagreement') : ''}</div></div><div class="trail-body"><div class="trail-column"><h4>Agent 1</h4><p>${answerSummary(decision.aiProposal)}</p></div><div class="trail-column"><h4>Agent 2</h4><p>${escapeHtml(decision.independentChallenge ?? '')}</p></div><div class="trail-column"><h4>Final answer</h4><p>${answerSummary(decision.answer)}</p><div class="effect-line">${escapeHtml(effectSummary(decision.statementEffect))}</div>${judgmentExplanation(decision)}</div></div></article>`).join('')}</div>
     </section>
     <section class="panel">
       <div class="panel-heading"><div><h2>All decisions</h2><p>Compact machine-readable answer review.</p></div><span class="count-chip" id="decision-count">${data.decisions.length}</span></div>
       <div class="filter-bar"><input id="decision-search" type="search" placeholder="Search decisions" aria-label="Search decisions" /><select id="decision-tier" aria-label="Filter by tier"><option value="">All tiers</option><option value="material_judgment">Material judgments</option><option value="operational">Operational</option></select><select id="decision-category" aria-label="Filter by category"><option value="">All categories</option><option value="evidence_matching">Evidence matching</option><option value="classification">Classification</option><option value="estimation">Estimation</option><option value="board_decision">Board decision</option></select><select id="decision-confidence" aria-label="Filter by confidence"><option value="">All confidence</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
       <div id="decision-results"></div>
     </section>
-    <p class="footer-note">DPI-HT-01 · Assessor review route</p>
+    <p class="footer-note">DPI-HT-01 Â· Assessor review route</p>
   `;
   installDecisionFilters(data.decisions);
 }
