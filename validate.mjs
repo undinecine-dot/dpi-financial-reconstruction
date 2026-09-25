@@ -15,6 +15,7 @@ if (!Array.isArray(submission.decisions) || submission.decisions.length !== 100)
 const ids = new Set();
 let material = 0;
 let operational = 0;
+const materialReasons = new Set();
 for (const decision of submission.decisions) {
   if (!/^D\d{3}$/.test(decision.id)) throw new Error(`Invalid decision ID: ${decision.id}`);
   if (ids.has(decision.id)) throw new Error(`Duplicate decision ID: ${decision.id}`);
@@ -26,10 +27,24 @@ for (const decision of submission.decisions) {
     for (const key of ['aiProposal', 'independentChallenge', 'studentReasoning', 'statementEffect', 'changedFromAI']) if (!(key in decision)) throw new Error(`Missing ${key} for ${decision.id}`);
     if (String(decision.independentChallenge).length < 20) throw new Error(`Independent challenge too short for ${decision.id}`);
     if (String(decision.studentReasoning).length < 20) throw new Error(`Student reasoning too short for ${decision.id}`);
+    if (/higher-ranked evidence/i.test(decision.studentReasoning)) throw new Error(`Generic evidence-ranking wording remains in ${decision.id}`);
+    materialReasons.add(String(decision.studentReasoning).trim());
     for (const key of ['profit', 'cash', 'assets', 'liabilities', 'equity']) if (!(key in decision.statementEffect)) throw new Error(`Missing statement effect ${key} for ${decision.id}`);
   } else operational += 1;
 }
 if (material !== 25 || operational !== 75) throw new Error(`Expected 25 material and 75 operational decisions, got ${material} and ${operational}`);
+if (materialReasons.size !== 25) throw new Error(`Expected 25 distinct material explanations, got ${materialReasons.size}`);
+
+for (const id of ['D058', 'D072']) {
+  const decision = submission.decisions.find((entry) => entry.id === id);
+  const alternative = decision?.alternativeTreatment;
+  if (!alternative?.assumption || !alternative?.treatment || !alternative?.effectComparedWithSelected || !alternative?.alternativeStatements) {
+    throw new Error(`Missing no-provision alternative for ${id}`);
+  }
+  if (alternative.alternativeStatements.netProfit !== 74000 || alternative.alternativeStatements.totalLiabilities !== 406000 || alternative.alternativeStatements.equity !== 134000) {
+    throw new Error(`Incorrect no-provision alternative figures for ${id}`);
+  }
+}
 
 const bs = submission.statements.balanceSheet;
 if (bs.totalAssets !== bs.totalLiabilitiesAndEquity) throw new Error('Balance sheet does not balance');
