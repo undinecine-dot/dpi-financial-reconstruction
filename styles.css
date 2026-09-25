@@ -146,6 +146,14 @@ tbody tr:hover { background: #f7fafb; }
 .trail-column h4 { margin: 0 0 .35rem; color: var(--ink-soft); font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; }
 .trail-column p { margin: 0; font-size: .85rem; }
 .effect-line { margin-top: .8rem; padding-top: .65rem; border-top: 1px dashed var(--line-strong); color: var(--ink-soft); font-size: .76rem; }
+.judgment-explanation { margin-top: .85rem; padding-top: .8rem; border-top: 1px solid var(--line); }
+.judgment-explanation h5 { margin: 0 0 .35rem; color: var(--ink); font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; }
+.judgment-explanation > p { color: var(--ink-soft); line-height: 1.55; }
+.judgment-evidence { margin-top: .75rem; color: var(--ink); font-size: .78rem; }
+.judgment-evidence .evidence-list { margin-top: .25rem; }
+.alternative-callout { margin-top: .85rem; padding: .75rem; background: var(--amber-soft); border: 1px solid #e4c98e; border-radius: 8px; }
+.alternative-callout > strong { display: block; margin-bottom: .35rem; color: #704c0b; font-size: .8rem; }
+.alternative-callout p { margin-top: .45rem; color: #5e4b28; line-height: 1.45; }
 
 .review-summary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .75rem; margin-bottom: 1rem; }
 .review-card strong { display: block; font-size: 1.8rem; }
